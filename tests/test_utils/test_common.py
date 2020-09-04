@@ -1,10 +1,11 @@
+import cftime
 import pytest
+import xarray as xr
 from dateutil.parser import ParserError
 from roocs_utils.exceptions import InvalidParameterValue, MissingParameterValue
 
 from clisops import utils
-
-from ._common import CMIP5_TAS_FILE
+from tests._common import CMIP5_TAS_FILE
 
 
 @pytest.mark.xfail(reason="parse_date removed as date parsed in TimeParameter class")
@@ -26,25 +27,27 @@ def test_parse_date_year():
 
 def test_map_params():
     args = utils.map_params(
-        ds=CMIP5_TAS_FILE,
+        ds=xr.open_mfdataset(CMIP5_TAS_FILE, use_cftime=True, combine="by_coords"),
         time=("1999-01-01T00:00:00", "2100-12-30T00:00:00"),
         area=(-5.0, 49.0, 10.0, 65),
         level=(1000.0, 1000.0),
     )
 
-    # have a look at what date was used in clisops master
-    assert args["start_date"] == "1999"
-    assert args["end_date"] == "2100"
+    # rounds to nearest time
+    assert args["start_date"] == cftime.Datetime360Day(2005, 12, 16, 0, 0, 0, 0)
+    assert args["end_date"] == cftime.Datetime360Day(2030, 11, 16, 0, 0, 0, 0)
     assert args["lon_bnds"] == (-5, 10)
     assert args["lat_bnds"] == (49, 65)
 
 
 def test_map_params_time():
     args = utils.map_params(
-        ds=CMIP5_TAS_FILE, time=("1999-01-01", "2100-12"), area=(0, -90, 360, 90)
+        ds=xr.open_mfdataset(CMIP5_TAS_FILE, use_cftime=True, combine="by_coords"),
+        time=("1999-01-01", "2100-12"),
+        area=(0, -90, 360, 90),
     )
-    assert args["start_date"] == "1999"
-    assert args["end_date"] == "2100"
+    assert args["start_date"] == cftime.Datetime360Day(2005, 12, 16, 0, 0, 0, 0)
+    assert args["end_date"] == cftime.Datetime360Day(2030, 11, 16, 0, 0, 0, 0)
 
 
 def test_map_params_invalid_time():
@@ -60,7 +63,7 @@ def test_map_params_invalid_time():
 
 def test_map_params_area():
     args = utils.map_params(
-        ds=CMIP5_TAS_FILE,
+        ds=xr.open_mfdataset(CMIP5_TAS_FILE, use_cftime=True, combine="by_coords"),
         area=(0, 10, 50, 60),
     )
     assert args["lon_bnds"] == (0, 50)

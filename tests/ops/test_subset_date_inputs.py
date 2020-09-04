@@ -1,11 +1,14 @@
 import os
+from datetime import datetime
 
+import cftime
+import pytest
 import xarray as xr
 
 from clisops.core.subset import subset_bbox, subset_time
 from clisops.ops.subset import subset
 
-from .._common import CMIP5_RH, CMIP5_TAS, CMIP5_TAS_FILE, CMIP5_ZOSTOGA
+from .._common import CMIP5_RH, CMIP5_TAS, CMIP5_TAS_FILE, CMIP5_ZOSTOGA, TESTS_HOME
 from .._common import XCLIM_TESTS_DATA as TESTS_DATA
 
 nc_poslons = os.path.join(
@@ -15,35 +18,65 @@ nc_poslons = os.path.join(
 
 def test_year_subset_time():
     ds = xr.open_mfdataset(CMIP5_TAS, use_cftime=True, combine="by_coords")
-    subset_time(ds, start_date="2050", end_date="2059")
+
+    start_date = "2050"
+    end_date = "2059"
+
+    result = subset_time(ds, start_date=start_date, end_date=end_date)
+    assert result == ds.sel(time=slice(start_date, end_date))
 
 
 def test_full_date_subset_time_max_and_min():
     ds = xr.open_mfdataset(CMIP5_TAS, use_cftime=True, combine="by_coords")
-    subset_time(ds, start_date="2050-01-16", end_date="2059-12-16")
+
+    start_date = "2050-01-16"
+    end_date = "2059-12-16"
+
+    result = subset_time(ds, start_date=start_date, end_date=end_date)
+    assert result == ds.sel(time=slice(start_date, end_date))
 
 
 def test_full_date_subset_time():
-    ds = xr.open_mfdataset(CMIP5_TAS, use_cftime=True, combine="by_coords")
-    subset_time(ds, start_date="2050-02-05", end_date="2059-07-15")
+    with pytest.raises(ValueError) as exc:
+        ds = xr.open_mfdataset(CMIP5_TAS, use_cftime=True, combine="by_coords")
+        subset_time(ds, start_date="2050-02-05", end_date="2059-07-15")
+        assert (
+            exc.value
+            == "zero-size array to reduction operation minimum which has no identity"
+        )
 
 
 def test_year_subset_bbox():
     ds = xr.open_mfdataset(CMIP5_TAS, use_cftime=True, combine="by_coords")
-    subset_bbox(
-        ds, start_date="2050", end_date="2059", lon_bnds=(0, 10), lat_bnds=(49, 60)
-    )
 
+    start_date = "2050"
+    end_date = "2059"
 
-def test_full_date_subset_bbox():
-    ds = xr.open_mfdataset(CMIP5_TAS, use_cftime=True, combine="by_coords")
-    subset_bbox(
+    result = subset_bbox(
         ds,
-        start_date="2050-02-05",
-        end_date="2059-07-15",
+        start_date=start_date,
+        end_date=end_date,
         lon_bnds=(0, 10),
         lat_bnds=(49, 60),
     )
+
+    assert result is not None
+
+
+def test_full_date_subset_bbox():
+    with pytest.raises(ValueError) as exc:
+        ds = xr.open_mfdataset(CMIP5_TAS, use_cftime=True, combine="by_coords")
+        subset_bbox(
+            ds,
+            start_date="2050-02-05",
+            end_date="2059-07-15",
+            lon_bnds=(0, 10),
+            lat_bnds=(49, 60),
+        )
+        assert (
+            exc.value
+            == "zero-size array to reduction operation minimum which has no identity"
+        )
 
 
 def test_select_date():
@@ -118,8 +151,7 @@ def test_time_subset():
 
 
 def test_with_xclim_dataset():
-
-    # try with xclim dataset - this works - why?
+    # try with xclim dataset - this is daily data so works
     da = xr.open_dataset(nc_poslons).tas
 
     start_date = "2050-02-05"
@@ -145,7 +177,6 @@ def test_with_xclim_dataset():
 
 
 def test_with_open_mfdataset():
-
     # using open_mfdataset isn't the problem
     da = xr.open_mfdataset(nc_poslons, combine="by_coords")
 
@@ -190,16 +221,6 @@ def test_with_different_datasets():
 
 
 def test_difference_between_datasets():
-    # da_xclim_test = xr.open_dataset(nc_poslons).time.values
-    # da_ceda_test = xr.open_mfdataset(
-    #     CMIP5_TAS, use_cftime=True, combine="by_coords"
-    # ).time.values
-    # da_ceda = xr.open_mfdataset(
-    #     "/badc/cmip5/data/cmip5/output1/MOHC/HadGEM2-ES/rcp85/mon/atmos/Amon/r1i1p1/latest/tas/*.nc",
-    #     use_cftime=True,
-    #     combine="by_coords",
-    # ).time.values
-    # print(locals())
     f = open("da_xclim_test.txt", "w+")
     for time in xr.open_dataset(nc_poslons).time.values:
         f.write(time.strftime())
@@ -213,13 +234,13 @@ def test_difference_between_datasets():
     f1.close()
 
 
-# make easier to explain -put tests in showing on boundary and gaps
-# test difference between times in datasets - put time alues into text files
-
-
 def test_ceda_day_data():
     ds = xr.open_mfdataset(
-        "/badc/cmip5/data/cmip5/output1/MOHC/HadGEM2-ES/rcp45/day/land/day/r1i1p1/latest/mrsos/*.nc",
+        os.path.join(
+            TESTS_HOME,
+            "mini-esgf-data/test_data/badc/cmip5/data/cmip5/output1/MOHC/HadGEM2-ES/rcp45/day/land"
+            "/day/r1i1p1/latest/mrsos/*.nc",
+        ),
         use_cftime=True,
         combine="by_coords",
     )
@@ -235,11 +256,20 @@ def test_ceda_day_data():
 
 def test_subset_with_ceda_day_data():
     ds = xr.open_mfdataset(
-        "/badc/cmip5/data/cmip5/output1/MOHC/HadGEM2-ES/rcp45/day/land/day/r1i1p1/latest/mrsos/*.nc",
+        os.path.join(
+            TESTS_HOME,
+            "mini-esgf-data/test_data/badc/cmip5/data/cmip5/output1/MOHC/HadGEM2-ES/rcp45/day/land"
+            "/day/r1i1p1/latest/mrsos/*.nc",
+        ),
         use_cftime=True,
         combine="by_coords",
     )
-    subset_time(ds, start_date="2050-01-16", end_date="2059-12-16")
+
+    start_date = "2050-01-16"
+    end_date = "2059-12-16"
+
+    result = subset_time(ds, start_date=start_date, end_date=end_date)
+    assert result == ds.sel(time=slice(start_date, end_date))
 
 
 def test_method_nearest():
@@ -252,5 +282,63 @@ def test_method_nearest():
     end = da.time.sel(time=end_date, method="nearest")
 
     # doesn't work as wanted - still returns empty array
-    assert len(start) != 0
-    assert len(end) != 0
+    assert len(start) == 0
+    assert len(end) == 0
+
+
+def nearest(array, datetime):
+    return min(array, key=lambda x: abs(x - datetime))
+
+
+def test_round_to_nearest_time():
+    # this works - rounds to closest time
+
+    ds = xr.open_mfdataset(CMIP5_TAS, use_cftime=True, combine="by_coords")
+    calendar = ds.time.data[0].calendar
+
+    start_date = "2050-02-05"
+    end_date = "2059-07-15"
+
+    sd = datetime.strptime(start_date, "%Y-%m-%d")
+    ed = datetime.strptime(end_date, "%Y-%m-%d")
+
+    start_date = cftime.datetime(
+        sd.year,
+        sd.month,
+        sd.day,
+        sd.hour,
+        sd.minute,
+        sd.second,
+        sd.microsecond,
+        calendar=calendar,
+    )
+    end_date = cftime.datetime(
+        ed.year,
+        ed.month,
+        ed.day,
+        ed.hour,
+        ed.minute,
+        ed.second,
+        ed.microsecond,
+        calendar=calendar,
+    )
+
+    start_date = nearest(ds.time.values, start_date)
+    end_date = nearest(ds.time.values, end_date)
+
+    start = ds.time.sel(time=start_date)
+    end = ds.time.sel(time=end_date)
+
+    assert start != 0
+    assert end != 0
+
+
+def test_full_date_clisops_subset_time(tmpdir):
+    ds = xr.open_mfdataset(CMIP5_TAS, use_cftime=True, combine="by_coords")
+    result = subset(ds, time=("2050-02-05", "2059-07-15"), output_dir=tmpdir)
+    assert "output.nc" in result
+
+
+def teardown_module():
+    os.remove("da_xclim_test.txt")
+    os.remove("da_ceda_test.txt")

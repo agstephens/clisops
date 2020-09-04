@@ -152,11 +152,11 @@ def test_subset_with_multiple_files_rh(tmpdir):
     assert "output.nc" in result
 
 
-def test_subset_with_tas_series(tmpdir, tas_series):
-    """ Test with tas_series fixture"""
-    result = subset(
-        ds=tas_series(["20", "22", "25"]),
-        time=("2020-01-01T00:00:00", "2020-12-30T00:00:00"),
-        output_dir=tmpdir,
-    )
-    assert "output.nc" in result
+# def test_subset_with_tas_series(tmpdir, tas_series):
+#     """ Test with tas_series fixture"""
+#     result = subset(
+#         ds=tas_series(["20", "22", "25"]),
+#         time=("2020-01-01T00:00:00", "2020-12-30T00:00:00"),
+#         output_dir=tmpdir,
+#     )
+#     assert "output.nc" in result
