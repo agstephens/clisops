@@ -29,7 +29,7 @@ setup_requirements = [
     "pytest-runner",
 ]
 
-test_requirements = ["pytest", "tox"]
+test_requirements = ["pytest", "tox", "memory-profiler"]
 
 docs_requirements = [
     "sphinx",

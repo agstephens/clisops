@@ -70,6 +70,7 @@ def subset(
     time_slices = get_time_slices(
         ds, split_method, start=args["start_date"], end=args["end_date"]
     )
+
     outputs = []
 
     for tslice in time_slices:
