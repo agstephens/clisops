@@ -338,7 +338,7 @@ def test_memory_limit():
 
     memory = memory_usage((subset_for_test, (real_data, start_time, end_time)))
 
-    upper_limit = 250 * 1.1
+    upper_limit = 80 * 1.1
 
     assert max(memory) <= upper_limit
 
