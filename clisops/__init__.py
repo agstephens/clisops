@@ -19,3 +19,5 @@ chunk_memory_limit = CONFIG["clisops:read"].get("chunk_memory_limit", None)
 
 if chunk_memory_limit:
     dask.config.set({"array.chunk-size": chunk_memory_limit})
+
+print("limit", chunk_memory_limit)

@@ -7,6 +7,7 @@ from roocs_utils.exceptions import InvalidParameterValue, MissingParameterValue
 from roocs_utils.parameter import area_parameter, time_parameter
 from roocs_utils.utils.common import parse_size
 
+import clisops
 from clisops import CONFIG
 from clisops.ops.subset import subset
 from clisops.utils.output_utils import _format_time, get_time_slices
@@ -318,7 +319,7 @@ def subset_for_test(real_data, start_time, end_time):
     )
 
 
-@pytest.mark.skipif(os.path.isdir("/badc") is False)
+@pytest.mark.skipif(os.path.isdir("/badc") is False, reason="data not available")
 def test_memory_limit():
     """ check memory does not greatly exceed dask chunk limit """
 
@@ -330,19 +331,24 @@ def test_memory_limit():
     start_time, end_time = "2001-01-01T00:00:00", "2200-12-30T00:00:00"
 
     config_max_file_size = CONFIG["clisops:write"]["file_size_limit"]
-    temp_max_file_size = "95MiB"
-    CONFIG["clisops:write"]["file_size_limit"] = temp_max_file_size
+    config_mem_limit = CONFIG["clisops:read"]["chunk_memory_limit"]
+
+    CONFIG["clisops:write"]["file_size_limit"] = "95MiB"
+    CONFIG["clisops:read"]["chunk_memory_limit"] = "80MiB"
 
     memory = memory_usage((subset_for_test, (real_data, start_time, end_time)))
 
-    upper_limit = 250 * 1.15
+    upper_limit = 250 * 1.1
 
     assert max(memory) <= upper_limit
 
     CONFIG["clisops:write"]["file_size_limit"] = config_max_file_size
+    CONFIG["clisops:read"]["chunk_memory_limit"] = config_mem_limit
 
 
-@pytest.mark.skipif(os.path.isdir("/group_workspaces") is False)
+@pytest.mark.skipif(
+    os.path.isdir("/group_workspaces") is False, reason="data not available"
+)
 def test_memory_limit_bigger_file():
     real_data = (
         "/group_workspaces/jasmin2/cp4cds1/vol1/data/c3s-cordex/output/EUR-11/IPSL/MOHC-HadGEM2-ES/rcp85"
@@ -352,12 +358,12 @@ def test_memory_limit_bigger_file():
     start_time, end_time = "2001-01-01T00:00:00", "2200-12-30T00:00:00"
 
     config_max_file_size = CONFIG["clisops:write"]["file_size_limit"]
-    temp_max_file_size = "750MiB"
-    CONFIG["clisops:write"]["file_size_limit"] = temp_max_file_size
+
+    CONFIG["clisops:write"]["file_size_limit"] = "750MiB"
 
     memory = memory_usage((subset_for_test, (real_data, start_time, end_time)))
 
-    upper_limit = 250 * 1.15
+    upper_limit = 250 * 1.1
 
     assert max(memory) <= upper_limit
 
