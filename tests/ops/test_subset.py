@@ -318,7 +318,7 @@ def subset_for_test(real_data, start_time, end_time):
     )
 
 
-# @pytest.mark.skipif()
+@pytest.mark.skipif(os.path.isdir("/badc") is False)
 def test_memory_limit():
     """ check memory does not greatly exceed dask chunk limit """
 
@@ -342,7 +342,7 @@ def test_memory_limit():
     CONFIG["clisops:write"]["file_size_limit"] = config_max_file_size
 
 
-# @pytest.mark.skipif()
+@pytest.mark.skipif(os.path.isdir("/group_workspaces") is False)
 def test_memory_limit_bigger_file():
     real_data = (
         "/group_workspaces/jasmin2/cp4cds1/vol1/data/c3s-cordex/output/EUR-11/IPSL/MOHC-HadGEM2-ES/rcp85"
