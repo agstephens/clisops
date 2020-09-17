@@ -141,7 +141,8 @@ def get_output(result_ds, output_type, output_dir, namer):
     # TODO: compute=True is blocking wps process. How to handle?
     # writer(output_path, compute=False)
     if fmt_method == 'to_netcdf':
-        result_ds.to_netcdf(output_path, compute=False)
+        delayed_obj = result_ds.to_netcdf(output_path, compute=False)
+        delayed_obj.compute()
     else:
         raise NotImplementedError('output format not supported')
     LOGGER.info(f"Wrote output file: {output_path}")
