@@ -143,8 +143,10 @@ def get_output(result_ds, output_type, output_dir, namer):
     if fmt_method == 'to_netcdf':
         from dask.diagnostics import ProgressBar
         delayed_obj = result_ds.to_netcdf(output_path, compute=False)
-        with ProgressBar():
+        pbar = ProgressBar(minimum=20)
+        with pbar:
             delayed_obj.compute()
+        LOGGER.info(f"duration={pbar.last_duration}")
     else:
         raise NotImplementedError('output format not supported')
     LOGGER.info(f"Wrote output file: {output_path}")
