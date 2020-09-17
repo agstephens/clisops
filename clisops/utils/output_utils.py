@@ -141,13 +141,10 @@ def get_output(result_ds, output_type, output_dir, namer):
     # TODO: compute=True is blocking wps process. How to handle?
     # writer(output_path, compute=False)
     if fmt_method == 'to_netcdf':
-        from dask.diagnostics import ProgressBar
-        # ds = result_ds.unify_chunks()
-        delayed_obj = result_ds.to_netcdf(output_path, compute=False)
-        pbar = ProgressBar(minimum=20)
-        with pbar:
-            delayed_obj.compute()
-        LOGGER.info(f"duration={pbar.last_duration}")
+        # TODO: https://docs.dask.org/en/latest/scheduling.html
+        import dask
+        with dask.config.set(scheduler='synchronous'):
+            result_ds.to_netcdf(output_path, compute=True)
     else:
         raise NotImplementedError('output format not supported')
     LOGGER.info(f"Wrote output file: {output_path}")
