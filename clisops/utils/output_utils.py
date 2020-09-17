@@ -142,7 +142,7 @@ def get_output(result_ds, output_type, output_dir, namer):
     # writer(output_path, compute=False)
     if fmt_method == 'to_netcdf':
         from dask.diagnostics import ProgressBar
-        delayed_obj = result_ds.to_netcdf(output_path, compute=False)
+        delayed_obj = result_ds.to_zarr(output_path, compute=False)
         pbar = ProgressBar(minimum=20)
         with pbar:
             delayed_obj.compute()
