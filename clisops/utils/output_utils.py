@@ -138,8 +138,9 @@ def get_output(result_ds, output_type, output_dir, namer):
     # writer = getattr(result_ds, fmt_method)
     output_path = os.path.join(output_dir, file_name)
 
-    # TODO: compute=True is blocking wps process. How to handle?
-    # writer(output_path, compute=False)
+    # TODO: writing output works currently only in sync mode.
+    # https://github.com/roocs/rook/issues/55
+    # writer(output_path, compute=True)
     if fmt_method == 'to_netcdf':
         # TODO: https://docs.dask.org/en/latest/scheduling.html
         import dask
